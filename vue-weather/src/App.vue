@@ -57,7 +57,6 @@ main {
   border: none;
   outline: none;
   background: none;
-
   background-color: rgba(255, 255, 255, 0.5);
 }
 </style>
