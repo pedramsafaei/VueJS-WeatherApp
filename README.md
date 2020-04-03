@@ -8,3 +8,4 @@ something like
 <template src="./template.html"></template>
 <script src=".script.js"></script>
 ```
+Or use [this](https://github.com/pksunkara/vue-builder-webpack-plugin) 
