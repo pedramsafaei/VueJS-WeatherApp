@@ -92,4 +92,19 @@ main {
   font-style: italic;
   text-align: center;
 }
+.weather-box {
+  text-align: center;
+}
+.weather-box .temp {
+  display: inline-block;
+  padding: 10px 25px;
+  color: #fff;
+  font-size: 100px;
+  font-weight: 900;
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 15px;
+  margin: 30px;
+  box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
 </style>
