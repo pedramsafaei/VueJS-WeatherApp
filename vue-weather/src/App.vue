@@ -10,6 +10,10 @@
           <div class="location">SOME LOCATION</div>
           <div class="date">Sunday Jan 1st 2020</div>
         </div>
+        <div class="weather-box">
+          <div class="temp">10°c</div>
+          <div class="weather">Snow</div>
+        </div>
       </div>
     </main>
   </div>
