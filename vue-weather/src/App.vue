@@ -10,6 +10,10 @@
           <div class="location">SOME LOCATION</div>
           <div class="date">Sunday Jan 1st 2020</div>
         </div>
+        <div class="weather-box">
+          <div class="temp">10°c</div>
+          <div class="weather">Snow</div>
+        </div>
       </div>
     </main>
   </div>
@@ -87,5 +91,27 @@ main {
   font-weight: 300;
   font-style: italic;
   text-align: center;
+}
+.weather-box {
+  text-align: center;
+}
+.weather-box .temp {
+  display: inline-block;
+  padding: 10px 25px;
+  color: #fff;
+  font-size: 100px;
+  font-weight: 900;
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-radius: 15px;
+  margin: 30px;
+  box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
+.weather-box .weather {
+  color: #fff;
+  font-size: 45px;
+  font-weight: 700;
+  font-style: italic;
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
 }
 </style>
