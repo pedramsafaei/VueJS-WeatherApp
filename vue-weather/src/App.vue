@@ -107,4 +107,11 @@ main {
   margin: 30px;
   box-shadow: 3px 6px rgba(0, 0, 0, 0.25);
 }
+.weather-box .weather {
+  color: #fff;
+  font-size: 45px;
+  font-weight: 700;
+  font-style: italic;
+  text-shadow: 3px 6px rgba(0, 0, 0, 0.25);
+}
 </style>
