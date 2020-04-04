@@ -4,6 +4,13 @@
       <div class="search-box">
         <input type="text" class="search-bar" placeholder="Search..." />
       </div>
+
+      <div class="weather-wrap">
+        <div class="location-box">
+          <div class="location">SOME LOCATION</div>
+          <div class="date">SOME DATE</div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
