@@ -4,6 +4,13 @@
       <div class="search-box">
         <input type="text" class="search-bar" placeholder="Search..." />
       </div>
+
+      <div class="weather-wrap">
+        <div class="location-box">
+          <div class="location">SOME LOCATION</div>
+          <div class="date">Sunday Jan 1st 2020</div>
+        </div>
+      </div>
     </main>
   </div>
 </template>
@@ -66,5 +73,19 @@ main {
   box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
   background-color: rgba(0, 0, 0, 0.75);
   border-radius: 15px 0px 15px 0px;
+}
+.location-box .location {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 500;
+  text-align: center;
+  text-shadow: 1px 3px rgba(0, 0, 0, 0.25);
+}
+.location-box .date {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 300;
+  font-style: italic;
+  text-align: center;
 }
 </style>
