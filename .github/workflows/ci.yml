@@ -1,0 +1,122 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: vue-weather/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./vue-weather
+        run: npm ci
+
+      - name: Lint code
+        working-directory: ./vue-weather
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: ./vue-weather
+        run: npm run test:unit
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: matrix.node-version == '18.x'
+        with:
+          files: ./vue-weather/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: vue-weather/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./vue-weather
+        run: npm ci
+
+      - name: Build application
+        working-directory: ./vue-weather
+        run: npm run build
+        env:
+          VUE_APP_WEATHER_API_KEY: ${{ secrets.VUE_APP_WEATHER_API_KEY }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: vue-weather/dist
+          retention-days: 7
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./vue-weather
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/weather-pro:latest
+            ${{ secrets.DOCKER_USERNAME }}/weather-pro:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/weather-pro:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/weather-pro:buildcache,mode=max
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy to production
+        run: |
+          echo "Add deployment steps here (e.g., SSH to server, kubectl apply, etc.)"
+          echo "Deployment would happen here in a real scenario"
