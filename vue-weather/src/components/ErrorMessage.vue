@@ -1,83 +1,46 @@
 <template>
-  <div class="error-message">
-    <div class="error-icon">⚠️</div>
-    <h3 class="error-title">{{ title }}</h3>
-    <p class="error-text">{{ message }}</p>
-    <button v-if="showRetry" class="retry-button" @click="$emit('retry')">Try Again</button>
+  <div class="error-message glass-panel p-12 mx-auto max-w-2xl text-center animate-slide-up">
+    <i class="pi pi-exclamation-triangle text-6xl text-yellow-300 mb-4"></i>
+    <h3 class="error-title text-white text-3xl font-bold mb-4 text-shadow">{{ title }}</h3>
+    <p class="error-text text-white text-lg leading-relaxed mb-6 text-shadow">{{ message }}</p>
+    <Button
+      v-if="showRetry"
+      label="Try Again"
+      icon="pi pi-refresh"
+      severity="secondary"
+      rounded
+      @click="emit('retry')"
+      class="btn-primary"
+    />
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 /**
  * ErrorMessage Component
  * Displays user-friendly error messages
  */
-export default {
-  name: 'ErrorMessage',
-  props: {
-    title: {
-      type: String,
-      default: 'Oops!',
-    },
-    message: {
-      type: String,
-      required: true,
-    },
-    showRetry: {
-      type: Boolean,
-      default: true,
-    },
-  },
-};
+import { withDefaults } from 'vue';
+import Button from 'primevue/button';
+
+interface Props {
+  title?: string;
+  message: string;
+  showRetry?: boolean;
+}
+
+withDefaults(defineProps<Props>(), {
+  title: 'Oops!',
+  showRetry: true,
+});
+
+const emit = defineEmits<{
+  (e: 'retry'): void;
+}>();
 </script>
 
 <style scoped>
 .error-message {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-  text-align: center;
-}
-
-.error-icon {
-  font-size: 64px;
-  margin-bottom: 16px;
-}
-
-.error-title {
-  color: white;
-  font-size: 28px;
-  font-weight: 700;
-  margin: 0 0 16px 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.error-text {
-  color: white;
-  font-size: 18px;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
-  max-width: 500px;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.retry-button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  color: white;
-  padding: 12px 32px;
-  border-radius: 24px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.retry-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  @apply flex flex-col items-center justify-center;
 }
 </style>

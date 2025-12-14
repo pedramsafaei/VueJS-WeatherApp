@@ -4,12 +4,8 @@
 
 /**
  * Convert temperature between units
- * @param {number} temp - Temperature value
- * @param {string} from - Source unit (celsius, fahrenheit, kelvin)
- * @param {string} to - Target unit
- * @returns {number} - Converted temperature
  */
-export const convertTemperature = (temp, from, to) => {
+export const convertTemperature = (temp: number, from: string, to: string): number => {
   if (from === to) return temp;
 
   let celsius = temp;
@@ -33,10 +29,8 @@ export const convertTemperature = (temp, from, to) => {
 
 /**
  * Get temperature unit symbol
- * @param {string} units - Unit system (metric, imperial, standard)
- * @returns {string} - Unit symbol
  */
-export const getTemperatureUnit = units => {
+export const getTemperatureUnit = (units: string): string => {
   switch (units) {
     case 'metric':
       return '°C';
@@ -51,10 +45,8 @@ export const getTemperatureUnit = units => {
 
 /**
  * Get wind speed unit
- * @param {string} units - Unit system
- * @returns {string} - Wind speed unit
  */
-export const getWindSpeedUnit = units => {
+export const getWindSpeedUnit = (units: string): string => {
   switch (units) {
     case 'imperial':
       return 'mph';
@@ -66,10 +58,8 @@ export const getWindSpeedUnit = units => {
 
 /**
  * Get wind direction from degrees
- * @param {number} degrees - Wind direction in degrees
- * @returns {string} - Cardinal direction
  */
-export const getWindDirection = degrees => {
+export const getWindDirection = (degrees: number): string => {
   const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   const index = Math.round(degrees / 22.5) % 16;
   return directions[index];
@@ -77,12 +67,9 @@ export const getWindDirection = degrees => {
 
 /**
  * Get weather icon class based on condition code
- * @param {string} iconCode - OpenWeatherMap icon code
- * @returns {string} - Icon class name
  */
-export const getWeatherIcon = iconCode => {
-  // Map OpenWeatherMap icon codes to weather-icons or custom classes
-  const iconMap = {
+export const getWeatherIcon = (iconCode: string): string => {
+  const iconMap: Record<string, string> = {
     '01d': 'sun',
     '01n': 'moon',
     '02d': 'cloud-sun',
@@ -106,50 +93,44 @@ export const getWeatherIcon = iconCode => {
 };
 
 /**
- * Get weather condition category
- * @param {string} main - Main weather condition
- * @returns {string} - Category for styling
+ * Get weather category from condition
  */
-export const getWeatherCategory = main => {
-  const category = main.toLowerCase();
-  if (['clear', 'sunny'].includes(category)) return 'sunny';
-  if (['clouds', 'cloudy'].includes(category)) return 'cloudy';
-  if (['rain', 'drizzle'].includes(category)) return 'rainy';
-  if (['thunderstorm'].includes(category)) return 'stormy';
-  if (['snow'].includes(category)) return 'snowy';
-  if (['mist', 'fog', 'haze'].includes(category)) return 'foggy';
-  return 'default';
+export const getWeatherCategory = (condition: string): string => {
+  const categories: Record<string, string> = {
+    Clear: 'sunny',
+    Clouds: 'cloudy',
+    Rain: 'rainy',
+    Drizzle: 'rainy',
+    Thunderstorm: 'stormy',
+    Snow: 'snowy',
+    Mist: 'foggy',
+    Fog: 'foggy',
+    Haze: 'foggy',
+    Smoke: 'foggy',
+    Dust: 'foggy',
+  };
+  return categories[condition] || 'default';
 };
 
 /**
- * Get background theme based on weather
- * @param {string} main - Main weather condition
- * @param {boolean} isDay - Whether it's daytime
- * @returns {string} - Background theme class
+ * Get weather theme for background
  */
-export const getWeatherTheme = (main, isDay = true) => {
-  const category = getWeatherCategory(main);
-  const timeOfDay = isDay ? 'day' : 'night';
-  return `${category}-${timeOfDay}`;
+export const getWeatherTheme = (condition: string, isDay: boolean): string => {
+  const category = getWeatherCategory(condition);
+  return `${category}-${isDay ? 'day' : 'night'}`;
 };
 
 /**
- * Check if it's daytime based on current time and sunrise/sunset
- * @param {number} current - Current timestamp
- * @param {number} sunrise - Sunrise timestamp
- * @param {number} sunset - Sunset timestamp
- * @returns {boolean} - True if daytime
+ * Check if it's daytime
  */
-export const isDayTime = (current, sunrise, sunset) => {
-  return current >= sunrise && current <= sunset;
+export const isDayTime = (currentTime: number, sunrise: number, sunset: number): boolean => {
+  return currentTime >= sunrise && currentTime <= sunset;
 };
 
 /**
- * Get UV index level description
- * @param {number} uvIndex - UV index value
- * @returns {Object} - Level and description
+ * Get UV index level and color
  */
-export const getUVIndexLevel = uvIndex => {
+export const getUVIndexLevel = (uvIndex: number): { level: string; color: string } => {
   if (uvIndex <= 2) return { level: 'Low', color: 'green' };
   if (uvIndex <= 5) return { level: 'Moderate', color: 'yellow' };
   if (uvIndex <= 7) return { level: 'High', color: 'orange' };
@@ -159,11 +140,9 @@ export const getUVIndexLevel = uvIndex => {
 
 /**
  * Get air quality index description
- * @param {number} aqi - Air quality index (1-5)
- * @returns {Object} - Description and color
  */
-export const getAQIDescription = aqi => {
-  const descriptions = {
+export const getAQIDescription = (aqi: number): { text: string; color: string } => {
+  const descriptions: Record<number, { text: string; color: string }> = {
     1: { text: 'Good', color: 'green' },
     2: { text: 'Fair', color: 'yellow' },
     3: { text: 'Moderate', color: 'orange' },
@@ -175,11 +154,8 @@ export const getAQIDescription = aqi => {
 
 /**
  * Format visibility
- * @param {number} visibility - Visibility in meters
- * @param {string} units - Unit system
- * @returns {string} - Formatted visibility
  */
-export const formatVisibility = (visibility, units = 'metric') => {
+export const formatVisibility = (visibility: number, units: string = 'metric'): string => {
   if (units === 'imperial') {
     const miles = (visibility / 1609.34).toFixed(1);
     return `${miles} mi`;
@@ -190,11 +166,9 @@ export const formatVisibility = (visibility, units = 'metric') => {
 
 /**
  * Group forecast data by day
- * @param {Array} list - Forecast list from API
- * @returns {Object} - Grouped forecast by day
  */
-export const groupForecastByDay = list => {
-  const grouped = {};
+export const groupForecastByDay = (list: any[]): Record<string, any[]> => {
+  const grouped: Record<string, any[]> = {};
 
   list.forEach(item => {
     const date = new Date(item.dt * 1000).toLocaleDateString();
@@ -209,10 +183,8 @@ export const groupForecastByDay = list => {
 
 /**
  * Get daily summary from hourly forecast
- * @param {Array} hourlyData - Hourly forecast data for a day
- * @returns {Object} - Daily summary
  */
-export const getDailySummary = hourlyData => {
+export const getDailySummary = (hourlyData: any[]): any | null => {
   if (!hourlyData || hourlyData.length === 0) return null;
 
   const temps = hourlyData.map(h => h.main.temp);
@@ -221,7 +193,7 @@ export const getDailySummary = hourlyData => {
   return {
     tempMin: Math.min(...temps),
     tempMax: Math.max(...temps),
-    condition: conditions[Math.floor(conditions.length / 2)], // midday condition
+    condition: conditions[Math.floor(conditions.length / 2)],
     icon: hourlyData[Math.floor(hourlyData.length / 2)].weather[0].icon,
     date: hourlyData[0].dt,
   };

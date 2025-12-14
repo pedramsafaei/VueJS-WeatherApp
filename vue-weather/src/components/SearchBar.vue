@@ -1,52 +1,94 @@
 <template>
-  <div class="search-bar-container">
-    <div class="search-bar" :class="{ focused: isFocused, error: hasError }">
-      <i class="icon search-icon">🔍</i>
-      <input
-        ref="searchInput"
+  <div class="search-bar-container mx-auto max-w-2xl px-4 my-6">
+    <div class="p-input-icon-left w-full">
+      <i class="pi pi-search text-white" />
+      <InputText
         v-model="searchQuery"
         type="text"
-        class="search-input"
         :placeholder="placeholder"
-        :aria-label="ariaLabel"
-        @input="onInput"
+        class="w-full glass-panel border-white/30 text-white placeholder-white/60 pl-10 pr-24"
         @keypress.enter="onSearch"
-        @focus="isFocused = true"
-        @blur="onBlur"
+        @input="onInput"
       />
-      <button
+      <Button
         v-if="searchQuery"
-        class="clear-button"
-        aria-label="Clear search"
+        icon="pi pi-times"
+        text
+        rounded
+        severity="secondary"
+        class="absolute right-14 top-1/2 -translate-y-1/2 text-white"
         @click="clearSearch"
-      >
-        ✕
-      </button>
-      <button
+      />
+      <Button
         v-if="enableGeolocation"
-        class="location-button"
-        aria-label="Use current location"
-        title="Use current location"
+        icon="pi pi-map-marker"
+        text
+        rounded
+        severity="secondary"
+        class="absolute right-2 top-1/2 -translate-y-1/2 text-white"
         @click="onUseLocation"
-      >
-        📍
-      </button>
+        title="Use current location"
+      />
     </div>
-    <transition name="fade">
-      <div v-if="showSuggestions && suggestions.length > 0" class="suggestions">
-        <button
-          v-for="(suggestion, index) in suggestions"
-          :key="index"
-          class="suggestion-item"
-          @click="selectSuggestion(suggestion)"
-        >
-          <span class="suggestion-name">{{ suggestion.name }}</span>
-          <span class="suggestion-country">{{ suggestion.country }}</span>
-        </button>
-      </div>
-    </transition>
   </div>
 </template>
+
+<script setup lang="ts">
+/**
+ * SearchBar Component
+ * Provides search functionality with geolocation
+ */
+import { ref } from 'vue';
+import InputText from 'primevue/inputtext';
+import Button from 'primevue/button';
+
+interface Props {
+  placeholder?: string;
+  enableGeolocation?: boolean;
+  enableAutocomplete?: boolean;
+}
+
+withDefaults(defineProps<Props>(), {
+  placeholder: 'Search for a city...',
+  enableGeolocation: true,
+  enableAutocomplete: true,
+});
+
+const emit = defineEmits<{
+  (e: 'search', query: string): void;
+  (e: 'use-location'): void;
+}>();
+
+const searchQuery = ref('');
+
+const onInput = () => {
+  // Future: implement autocomplete if needed
+};
+
+const onSearch = () => {
+  if (searchQuery.value.trim()) {
+    emit('search', searchQuery.value.trim());
+  }
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
+};
+
+const onUseLocation = () => {
+  emit('use-location');
+};
+</script>
+
+<style scoped>
+.search-bar-container :deep(.p-inputtext) {
+  @apply py-4 px-6 rounded-full text-lg;
+}
+
+.search-bar-container :deep(.p-inputtext:focus) {
+  @apply ring-2 ring-white/50;
+}
+</style>
 
 <script>
 /**

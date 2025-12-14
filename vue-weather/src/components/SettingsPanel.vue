@@ -1,83 +1,158 @@
 <template>
-  <div class="settings-panel" :class="{ open: isOpen }">
-    <div class="settings-header">
-      <h3 class="settings-title">Settings</h3>
-      <button class="close-button" aria-label="Close settings" @click="$emit('close')">
-        ✕
-      </button>
-    </div>
+  <Sidebar v-model:visible="isOpenLocal" position="right" class="w-full md:w-96">
+    <template #header>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-cog text-2xl"></i>
+        <h3 class="text-xl font-bold">Settings</h3>
+      </div>
+    </template>
 
-    <div class="settings-content">
+    <div class="settings-content space-y-6">
+      <!-- Temperature Unit -->
       <div class="setting-group">
-        <label class="setting-label">Temperature Unit</label>
-        <div class="unit-selector">
-          <button
-            class="unit-button"
-            :class="{ active: units === 'metric' }"
+        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 block">
+          Temperature Unit
+        </label>
+        <div class="flex flex-col gap-2">
+          <Button
+            label="Celsius (°C)"
+            :class="{ 'p-button-primary': units === 'metric', 'p-button-outlined': units !== 'metric' }"
             @click="changeUnits('metric')"
-          >
-            Celsius (°C)
-          </button>
-          <button
-            class="unit-button"
-            :class="{ active: units === 'imperial' }"
+            class="justify-start"
+          />
+          <Button
+            label="Fahrenheit (°F)"
+            :class="{ 'p-button-primary': units === 'imperial', 'p-button-outlined': units !== 'imperial' }"
             @click="changeUnits('imperial')"
-          >
-            Fahrenheit (°F)
-          </button>
-          <button
-            class="unit-button"
-            :class="{ active: units === 'standard' }"
+            class="justify-start"
+          />
+          <Button
+            label="Kelvin (K)"
+            :class="{ 'p-button-primary': units === 'standard', 'p-button-outlined': units !== 'standard' }"
             @click="changeUnits('standard')"
-          >
-            Kelvin (K)
-          </button>
+            class="justify-start"
+          />
         </div>
       </div>
 
-      <div class="setting-group">
-        <label class="setting-label">
-          <input
-            type="checkbox"
-            :checked="darkMode"
-            @change="$emit('toggle-dark-mode')"
-          />
-          <span>Dark Mode</span>
-        </label>
-      </div>
+      <Divider />
 
+      <!-- Enable Geolocation -->
       <div class="setting-group">
-        <label class="setting-label">
-          <input
-            type="checkbox"
-            :checked="enableGeolocation"
+        <div class="flex items-center justify-between">
+          <label for="geolocation-toggle" class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Enable Geolocation
+          </label>
+          <InputSwitch
+            id="geolocation-toggle"
+            v-model="enableGeolocationLocal"
             @change="toggleGeolocation"
           />
-          <span>Enable Geolocation</span>
-        </label>
+        </div>
       </div>
 
+      <!-- Auto-refresh -->
       <div class="setting-group">
-        <label class="setting-label">
-          <input
-            type="checkbox"
-            :checked="autoRefresh"
+        <div class="flex items-center justify-between">
+          <label for="auto-refresh-toggle" class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Auto-refresh Weather
+          </label>
+          <InputSwitch
+            id="auto-refresh-toggle"
+            v-model="autoRefreshLocal"
             @change="toggleAutoRefresh"
           />
-          <span>Auto-refresh Weather Data</span>
-        </label>
+        </div>
+      </div>
+
+      <Divider />
+
+      <!-- About Section -->
+      <div class="setting-group">
+        <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">About</h4>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Weather Pro v3.0.0
+        </p>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          Built with Vue 3, TypeScript, and PrimeVue
+        </p>
       </div>
     </div>
-  </div>
+  </Sidebar>
 </template>
 
-<script>
+<script setup lang="ts">
 /**
  * SettingsPanel Component
  * User preferences and settings management
  */
-import { mapGetters, mapActions } from 'vuex';
+import { ref, watch } from 'vue';
+import { storeToRefs } from 'pinia';
+import Sidebar from 'primevue/sidebar';
+import Button from 'primevue/button';
+import InputSwitch from 'primevue/inputswitch';
+import Divider from 'primevue/divider';
+import { useSettingsStore } from '@/stores/settings';
 
+interface Props {
+  isOpen: boolean;
+}
+
+const props = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'units-changed'): void;
+}>();
+
+const settingsStore = useSettingsStore();
+const { units, enableGeolocation, autoRefresh } = storeToRefs(settingsStore);
+
+const isOpenLocal = ref(props.isOpen);
+const enableGeolocationLocal = ref(enableGeolocation.value);
+const autoRefreshLocal = ref(autoRefresh.value);
+
+watch(() => props.isOpen, (newValue) => {
+  isOpenLocal.value = newValue;
+});
+
+watch(isOpenLocal, (newValue) => {
+  if (!newValue) {
+    emit('close');
+  }
+});
+
+watch(enableGeolocation, (newValue) => {
+  enableGeolocationLocal.value = newValue;
+});
+
+watch(autoRefresh, (newValue) => {
+  autoRefreshLocal.value = newValue;
+});
+
+const changeUnits = (newUnits: 'metric' | 'imperial' | 'standard') => {
+  settingsStore.setUnits(newUnits);
+  emit('units-changed');
+};
+
+const toggleGeolocation = () => {
+  settingsStore.setGeolocation(enableGeolocationLocal.value);
+};
+
+const toggleAutoRefresh = () => {
+  settingsStore.setAutoRefresh(autoRefreshLocal.value);
+};
+</script>
+
+<style scoped>
+.settings-content {
+  @apply p-4;
+}
+
+.setting-group {
+  @apply mb-6;
+}
+</style>
 export default {
   name: 'SettingsPanel',
   props: {

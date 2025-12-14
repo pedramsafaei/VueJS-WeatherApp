@@ -2,15 +2,14 @@
  * Date Formatting Utilities
  */
 
+type DateInput = Date | number | string;
+
 /**
  * Format date to readable string
- * @param {Date|number|string} date - Date to format
- * @param {string} locale - Locale string
- * @returns {string} - Formatted date string
  */
-export const formatDate = (date, locale = 'en-US') => {
+export const formatDate = (date: DateInput, locale: string = 'en-US'): string => {
   const dateObj = new Date(date);
-  const options = {
+  const options: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -21,13 +20,10 @@ export const formatDate = (date, locale = 'en-US') => {
 
 /**
  * Format date to short string
- * @param {Date|number|string} date - Date to format
- * @param {string} locale - Locale string
- * @returns {string} - Formatted date string
  */
-export const formatShortDate = (date, locale = 'en-US') => {
+export const formatShortDate = (date: DateInput, locale: string = 'en-US'): string => {
   const dateObj = new Date(date);
-  const options = {
+  const options: Intl.DateTimeFormatOptions = {
     month: 'short',
     day: 'numeric',
   };
@@ -36,13 +32,10 @@ export const formatShortDate = (date, locale = 'en-US') => {
 
 /**
  * Format time
- * @param {Date|number|string} date - Date to format
- * @param {string} locale - Locale string
- * @returns {string} - Formatted time string
  */
-export const formatTime = (date, locale = 'en-US') => {
+export const formatTime = (date: DateInput, locale: string = 'en-US'): string => {
   const dateObj = new Date(date);
-  const options = {
+  const options: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
   };
@@ -51,42 +44,31 @@ export const formatTime = (date, locale = 'en-US') => {
 
 /**
  * Format timestamp to time
- * @param {number} timestamp - Unix timestamp
- * @param {string} locale - Locale string
- * @returns {string} - Formatted time string
  */
-export const formatTimestamp = (timestamp, locale = 'en-US') => {
+export const formatTimestamp = (timestamp: number, locale: string = 'en-US'): string => {
   return formatTime(timestamp * 1000, locale);
 };
 
 /**
  * Get day name from date
- * @param {Date|number|string} date - Date
- * @param {string} locale - Locale string
- * @returns {string} - Day name
  */
-export const getDayName = (date, locale = 'en-US') => {
+export const getDayName = (date: DateInput, locale: string = 'en-US'): string => {
   const dateObj = new Date(date);
   return dateObj.toLocaleDateString(locale, { weekday: 'long' });
 };
 
 /**
  * Get short day name from date
- * @param {Date|number|string} date - Date
- * @param {string} locale - Locale string
- * @returns {string} - Short day name
  */
-export const getShortDayName = (date, locale = 'en-US') => {
+export const getShortDayName = (date: DateInput, locale: string = 'en-US'): string => {
   const dateObj = new Date(date);
   return dateObj.toLocaleDateString(locale, { weekday: 'short' });
 };
 
 /**
  * Check if date is today
- * @param {Date|number|string} date - Date to check
- * @returns {boolean} - True if date is today
  */
-export const isToday = date => {
+export const isToday = (date: DateInput): boolean => {
   const today = new Date();
   const checkDate = new Date(date);
   return (
@@ -98,13 +80,11 @@ export const isToday = date => {
 
 /**
  * Get relative time string
- * @param {Date|number|string} date - Date
- * @returns {string} - Relative time string
  */
-export const getRelativeTime = date => {
+export const getRelativeTime = (date: DateInput): string => {
   const now = new Date();
   const dateObj = new Date(date);
-  const diffMs = now - dateObj;
+  const diffMs = now.getTime() - dateObj.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
