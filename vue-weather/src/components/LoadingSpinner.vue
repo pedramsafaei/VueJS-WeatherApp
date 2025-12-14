@@ -1,54 +1,43 @@
 <template>
-  <div class="loading-spinner">
-    <div class="spinner"></div>
-    <p v-if="message" class="loading-message">{{ message }}</p>
+  <div class="loading-spinner glass-panel p-12 mx-auto max-w-md">
+    <ProgressSpinner
+      style="width: 60px; height: 60px"
+      strokeWidth="4"
+      fill="transparent"
+      animationDuration="1s"
+      class="mx-auto"
+    />
+    <Skeleton v-if="showSkeleton" height="2rem" class="mt-8" />
+    <Skeleton v-if="showSkeleton" height="2rem" class="mt-4" />
+    <Skeleton v-if="showSkeleton" height="2rem" class="mt-4" />
+    <p v-if="message" class="loading-message mt-6 text-white text-center text-shadow">
+      {{ message }}
+    </p>
   </div>
 </template>
 
-<script>
+<script setup lang="ts">
 /**
  * LoadingSpinner Component
- * Displays loading state with optional message
+ * Displays loading state with skeleton loaders
  */
-export default {
-  name: 'LoadingSpinner',
-  props: {
-    message: {
-      type: String,
-      default: 'Loading weather data...',
-    },
-  },
-};
+import { withDefaults } from 'vue';
+import ProgressSpinner from 'primevue/progressspinner';
+import Skeleton from 'primevue/skeleton';
+
+interface Props {
+  message?: string;
+  showSkeleton?: boolean;
+}
+
+withDefaults(defineProps<Props>(), {
+  message: 'Loading weather data...',
+  showSkeleton: true,
+});
 </script>
 
 <style scoped>
 .loading-spinner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 24px;
-}
-
-.spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.loading-message {
-  color: white;
-  margin-top: 24px;
-  font-size: 18px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  @apply flex flex-col items-center justify-center;
 }
 </style>

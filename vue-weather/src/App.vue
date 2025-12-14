@@ -1,311 +1,204 @@
 <template>
-  <div id="app" :class="['app-container', themeClass, { 'dark-mode': darkMode }]">
-    <main class="main-content">
-      <!-- Header -->
-      <header class="app-header">
-        <div class="header-content">
-          <h1 class="app-title">🌤️ Weather Pro</h1>
-          <button
-            class="settings-button"
-            aria-label="Open settings"
-            @click="toggleSettings"
-          >
-            ⚙️
-          </button>
-        </div>
-      </header>
+  <ErrorBoundary>
+    <div id="app" :class="['app-container', themeClass, { 'dark-mode': darkMode }]">
+      <Toast />
+      <main class="main-content">
+        <!-- Header -->
+        <header class="app-header">
+          <div class="header-content">
+            <h1 class="app-title cursor-pointer" @click="$router.push('/')">🌤️ Weather Pro</h1>
+            <div class="flex items-center gap-4">
+              <Button
+                icon="pi pi-info-circle"
+                rounded
+                text
+                severity="secondary"
+                @click="$router.push('/about')"
+                aria-label="About"
+                class="text-white hover:bg-white/20"
+              />
+              <Button
+                icon="pi pi-moon"
+                v-if="!darkMode"
+                rounded
+                text
+                severity="secondary"
+                @click="settingsStore.toggleDarkMode()"
+                aria-label="Toggle dark mode"
+                class="text-white hover:bg-white/20"
+              />
+              <Button
+                icon="pi pi-sun"
+                v-else
+                rounded
+                text
+                severity="secondary"
+                @click="settingsStore.toggleDarkMode()"
+                aria-label="Toggle light mode"
+                class="text-white hover:bg-white/20"
+              />
+              <Button
+                icon="pi pi-cog"
+                rounded
+                text
+                severity="secondary"
+                @click="toggleSettings"
+                aria-label="Open settings"
+                class="text-white hover:bg-white/20"
+              />
+            </div>
+          </div>
+        </header>
 
-      <!-- Search Bar -->
-      <SearchBar
-        :enable-geolocation="enableGeolocation"
-        :enable-autocomplete="true"
-        @search="handleSearch"
-        @use-location="handleUseLocation"
+        <!-- Router View -->
+        <router-view v-slot="{ Component }">
+          <Transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </Transition>
+        </router-view>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+          <p>
+            Powered by
+            <a
+              href="https://openweathermap.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              OpenWeatherMap
+            </a>
+          </p>
+        </footer>
+      </main>
+
+      <!-- Settings Panel -->
+      <SettingsPanel
+        :is-open="showSettings"
+        @close="toggleSettings"
+        @units-changed="handleUnitsChange"
       />
 
-      <!-- Favorite Locations -->
-      <FavoriteLocations @select="handleFavoriteSelect" />
+      <!-- Overlay for settings -->
+      <div
+        v-if="showSettings"
+        class="overlay"
+        @click="toggleSettings"
+      ></div>
 
-      <!-- Error Message -->
-      <ErrorMessage
-        v-if="error"
-        :message="error"
-        @retry="retryLastSearch"
-      />
-
-      <!-- Loading State -->
-      <LoadingSpinner v-else-if="loading" />
-
-      <!-- Weather Content -->
-      <template v-else-if="hasWeatherData">
-        <CurrentWeather :weather="currentWeather" />
-        <WeatherForecast v-if="forecast" :forecast="forecast" />
-      </template>
-
-      <!-- Welcome Message -->
-      <div v-else class="welcome-message">
-        <h2 class="welcome-title">Welcome to Weather Pro</h2>
-        <p class="welcome-text">
-          Search for a city to get started, or use your current location.
-        </p>
-        <div class="welcome-icon">🌍</div>
-      </div>
-
-      <!-- Footer -->
-      <footer class="app-footer">
-        <p>
-          Powered by
-          <a
-            href="https://openweathermap.org/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            OpenWeatherMap
-          </a>
-        </p>
-      </footer>
-    </main>
-
-    <!-- Settings Panel -->
-    <SettingsPanel
-      :is-open="showSettings"
-      @close="toggleSettings"
-      @toggle-dark-mode="toggleDarkMode"
-      @units-changed="handleUnitsChange"
-    />
-
-    <!-- Overlay for settings -->
-    <div
-      v-if="showSettings"
-      class="overlay"
-      @click="toggleSettings"
-    ></div>
-  </div>
+      <!-- Install Prompt -->
+      <InstallPrompt />
+    </div>
+  </ErrorBoundary>
 </template>
 
-<script>
+<script setup lang="ts">
 /**
  * Main App Component
  * Root component managing the application state and layout
  */
-import { mapGetters, mapActions } from 'vuex';
-import SearchBar from './components/SearchBar.vue';
-import CurrentWeather from './components/CurrentWeather.vue';
-import WeatherForecast from './components/WeatherForecast.vue';
-import FavoriteLocations from './components/FavoriteLocations.vue';
-import LoadingSpinner from './components/LoadingSpinner.vue';
-import ErrorMessage from './components/ErrorMessage.vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import Button from 'primevue/button';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 import SettingsPanel from './components/SettingsPanel.vue';
-import {
-  getCurrentWeatherByCity,
-  getCurrentWeatherByCoords,
-  getForecastByCity,
-  getForecastByCoords,
-} from './services/weatherService';
-import { getCurrentPosition } from './services/geolocationService';
+import ErrorBoundary from './components/ErrorBoundary.vue';
+import InstallPrompt from './components/InstallPrompt.vue';
 import { getWeatherTheme, isDayTime } from './utils/weatherHelpers';
+import { useWeatherStore } from './stores/weather';
+import { useSettingsStore } from './stores/settings';
+import { initPerformanceMonitoring } from './utils/performance';
 
-export default {
-  name: 'App',
-  components: {
-    SearchBar,
-    CurrentWeather,
-    WeatherForecast,
-    FavoriteLocations,
-    LoadingSpinner,
-    ErrorMessage,
-    SettingsPanel,
-  },
-  data() {
-    return {
-      showSettings: false,
-      lastSearchQuery: null,
-      autoRefreshInterval: null,
-    };
-  },
-  computed: {
-    ...mapGetters('weather', [
-      'currentWeather',
-      'forecast',
-      'isLoading',
-      'error',
-      'hasWeatherData',
-    ]),
-    ...mapGetters('settings', [
-      'units',
-      'darkMode',
-      'enableGeolocation',
-      'autoRefresh',
-      'refreshInterval',
-    ]),
-    loading() {
-      return this.isLoading;
-    },
-    themeClass() {
-      if (!this.currentWeather || !this.currentWeather.weather) {
-        return 'default-day';
-      }
-      const isDay = isDayTime(
-        Date.now() / 1000,
-        this.currentWeather.sys?.sunrise || 0,
-        this.currentWeather.sys?.sunset || 0
-      );
-      return getWeatherTheme(this.currentWeather.weather[0].main, isDay);
-    },
-  },
-  watch: {
-    autoRefresh(enabled) {
-      if (enabled) {
-        this.startAutoRefresh();
-      } else {
-        this.stopAutoRefresh();
-      }
-    },
-    refreshInterval() {
-      if (this.autoRefresh) {
-        this.stopAutoRefresh();
-        this.startAutoRefresh();
-      }
-    },
-  },
-  mounted() {
-    // Apply dark mode from settings
-    if (this.darkMode) {
-      document.body.classList.add('dark-mode');
-    }
+// Stores
+const weatherStore = useWeatherStore();
+const settingsStore = useSettingsStore();
+const toast = useToast();
 
-    // Try to load default city or use geolocation
-    this.initializeWeather();
+// Store refs
+const { currentWeather } = storeToRefs(weatherStore);
+const { darkMode, autoRefresh, refreshInterval } = storeToRefs(settingsStore);
 
-    // Start auto-refresh if enabled
-    if (this.autoRefresh) {
-      this.startAutoRefresh();
-    }
-  },
-  beforeDestroy() {
-    this.stopAutoRefresh();
-  },
-  methods: {
-    ...mapActions('weather', [
-      'setCurrentWeather',
-      'setForecast',
-      'setLoading',
-      'setError',
-      'clearError',
-    ]),
-    ...mapActions('settings', ['toggleDarkMode']),
+// Local state
+const showSettings = ref(false);
+const autoRefreshInterval = ref<number | null>(null);
 
-    async initializeWeather() {
-      const defaultCity = process.env.VUE_APP_DEFAULT_CITY;
-      if (defaultCity) {
-        await this.handleSearch(defaultCity);
-      }
-    },
+// Computed
+const themeClass = computed(() => {
+  if (!currentWeather.value || !currentWeather.value.weather) {
+    return 'default-day';
+  }
+  const isDay = isDayTime(
+    Date.now() / 1000,
+    currentWeather.value.sys?.sunrise || 0,
+    currentWeather.value.sys?.sunset || 0
+  );
+  return getWeatherTheme(currentWeather.value.weather[0].main, isDay);
+});
 
-    async handleSearch(city) {
-      this.lastSearchQuery = { type: 'city', value: city };
-      this.clearError();
-      this.setLoading(true);
-
-      try {
-        const [weatherData, forecastData] = await Promise.all([
-          getCurrentWeatherByCity(city, this.units),
-          getForecastByCity(city, this.units),
-        ]);
-
-        this.setCurrentWeather(weatherData);
-        this.setForecast(forecastData);
-      } catch (error) {
-        this.setError(error.message);
-      } finally {
-        this.setLoading(false);
-      }
-    },
-
-    async handleUseLocation() {
-      this.clearError();
-      this.setLoading(true);
-
-      try {
-        const position = await getCurrentPosition();
-        this.lastSearchQuery = {
-          type: 'coords',
-          value: { lat: position.lat, lon: position.lon },
-        };
-
-        const [weatherData, forecastData] = await Promise.all([
-          getCurrentWeatherByCoords(position.lat, position.lon, this.units),
-          getForecastByCoords(position.lat, position.lon, this.units),
-        ]);
-
-        this.setCurrentWeather(weatherData);
-        this.setForecast(forecastData);
-      } catch (error) {
-        this.setError(error.message);
-      } finally {
-        this.setLoading(false);
-      }
-    },
-
-    async handleFavoriteSelect(location) {
-      await this.handleSearch(location.name);
-    },
-
-    async handleUnitsChange() {
-      // Refresh weather data with new units
-      if (this.lastSearchQuery) {
-        await this.retryLastSearch();
-      }
-    },
-
-    async retryLastSearch() {
-      if (!this.lastSearchQuery) {
-        return;
-      }
-
-      if (this.lastSearchQuery.type === 'city') {
-        await this.handleSearch(this.lastSearchQuery.value);
-      } else if (this.lastSearchQuery.type === 'coords') {
-        const { lat, lon } = this.lastSearchQuery.value;
-        this.clearError();
-        this.setLoading(true);
-
-        try {
-          const [weatherData, forecastData] = await Promise.all([
-            getCurrentWeatherByCoords(lat, lon, this.units),
-            getForecastByCoords(lat, lon, this.units),
-          ]);
-
-          this.setCurrentWeather(weatherData);
-          this.setForecast(forecastData);
-        } catch (error) {
-          this.setError(error.message);
-        } finally {
-          this.setLoading(false);
-        }
-      }
-    },
-
-    toggleSettings() {
-      this.showSettings = !this.showSettings;
-    },
-
-    startAutoRefresh() {
-      this.autoRefreshInterval = setInterval(() => {
-        if (this.lastSearchQuery && !this.loading) {
-          this.retryLastSearch();
-        }
-      }, this.refreshInterval);
-    },
-
-    stopAutoRefresh() {
-      if (this.autoRefreshInterval) {
-        clearInterval(this.autoRefreshInterval);
-        this.autoRefreshInterval = null;
-      }
-    },
-  },
+// Methods
+const initializeApp = async () => {
+  // Initialize dark mode
+  settingsStore.initializeDarkMode();
+  
+  // Initialize performance monitoring
+  initPerformanceMonitoring();
 };
+
+const handleUnitsChange = async () => {
+  // Handled in Home view
+};
+
+const toggleSettings = () => {
+  showSettings.value = !showSettings.value;
+};
+
+const startAutoRefresh = () => {
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+  }
+  
+  autoRefreshInterval.value = window.setInterval(() => {
+    // Trigger refresh event
+    window.dispatchEvent(new CustomEvent('auto-refresh'));
+  }, refreshInterval.value);
+};
+
+const stopAutoRefresh = () => {
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+    autoRefreshInterval.value = null;
+  }
+};
+
+// Watchers
+watch(autoRefresh, (enabled) => {
+  if (enabled) {
+    startAutoRefresh();
+  } else {
+    stopAutoRefresh();
+  }
+});
+
+watch(refreshInterval, () => {
+  if (autoRefresh.value) {
+    stopAutoRefresh();
+    startAutoRefresh();
+  }
+});
+
+// Lifecycle
+onMounted(() => {
+  initializeApp();
+
+  if (autoRefresh.value) {
+    startAutoRefresh();
+  }
+});
+
+onUnmounted(() => {
+  stopAutoRefresh();
+});
 </script>
 
 <style>
@@ -557,5 +450,16 @@ button:focus,
 input:focus {
   outline: 2px solid rgba(255, 255, 255, 0.8);
   outline-offset: 2px;
+}
+
+/* Route transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
